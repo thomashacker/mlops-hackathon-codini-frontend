@@ -15,12 +15,13 @@ export default function Home() {
   const [textareaContent, setTextareaContent] = useState('');
   const [apiStatus, setApiStatus] = useState<string>("Offline");
 
-  const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const file = event.target.files[0];
       const reader = new FileReader();
       reader.onload = function (evt) {
-        setFileContent(evt.target.result as string);
+        // evt is of type ProgressEvent<FileReader>
+        setFileContent(evt.target?.result as string);
       };
       reader.readAsText(file);
     }
@@ -79,7 +80,7 @@ export default function Home() {
       </div>
 
       <div className="flex flex-row justify-center items-center h-auto mt-24">
-        <div className="w-1/3 h-96 bg-zinc-100 m-6 rounded shadow-lg p-4 table-container animate-pop-in">
+        <div className="w-1/3 h-96 bg-zinc-100 m-6 rounded shadow-lg p-4 table-container animate-pop-in  border-2 border-dashed border-green-300">
 
           <div className="flex items-center mb-4">
             <span className="bg-red-500 rounded-full w-2 h-2 mr-1"></span>
@@ -136,7 +137,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="w-1/3 h-96 bg-zinc-100 m-6 rounded shadow-lg p-4 table-container animate-pop-in">
+        <div className="w-1/3 h-96 bg-zinc-200 m-6 rounded shadow-lg p-4 table-container animate-pop-in  border-2 border-dashed border-blue-300">
           <div className="flex items-center mb-4">
             <span className="bg-red-500 rounded-full w-2 h-2 mr-1"></span>
             <span className="bg-yellow-500 rounded-full w-2 h-2 mr-1"></span>
@@ -146,18 +147,8 @@ export default function Home() {
           <Editor
             height="calc(100% - 2rem)"
             defaultLanguage="python"
-            defaultValue="def hello_world(text:str)"
           />
-          <div className="mt-8 flex flex-wrap bg-zinc-100 rounded-lg shadow-lg p-3">
-            {['Documentation A', 'Documentation B'].map((tag, index) => (
-              <div key={index} className="m-3 p-3 bg-zinc-200 text-zinc-800 rounded-full">
-                {tag}
-              </div>
-            ))}
-          </div>
-
         </div>
-
       </div>
     </div>
 
