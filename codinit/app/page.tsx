@@ -10,11 +10,20 @@ import { TbPrompt } from "react-icons/tb";
 export default function Home() {
   const [text, setText] = useState("");
   const [fileContent, setFileContent] = useState('');
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
-  const listItems = ["Weaviate", "LangChain"];
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [textareaContent, setTextareaContent] = useState('');
   const [apiStatus, setApiStatus] = useState<string>("Offline");
   const [generatedCode, setGeneratedCode] = useState<string>('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+
+  const libraryLinks = {
+    "Weaviate": "https://weaviate.io/developers/weaviate",
+    "LangChain": "https://langchain.readthedocs.io/en/latest/"
+  };
+
+  const listItems = Object.keys(libraryLinks);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -46,23 +55,31 @@ export default function Home() {
   }, []);
 
   const handleGenerateClick = async () => {
-    const response = await fetch('http://localhost:8000/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        source_code: fileContent,
-        prompt: textareaContent,
-        libraries: [selectedItem],
-      }),
-    });
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/generate/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          source_code: fileContent,
+          prompt: textareaContent,
+          libraries: selectedItems.map(item => libraryLinks[item]),
+        }),
+      });
 
-    const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error('Something went wrong');
+      }
 
-    setGeneratedCode(responseData);
-
-    // do something with responseData
+      const responseData = await response.json();
+      setGeneratedCode(responseData);
+    } catch (error) {
+      setErrorMsg(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -120,8 +137,14 @@ export default function Home() {
               {listItems.map((item, index) => (
                 <div
                   key={index}
-                  onClick={() => setSelectedItem(item)}
-                  className={`cursor-pointer p-9 m-2 rounded-lg shadow-lg  animate-pop-in-late table-container flex justify-center transform transition-all duration-200 hover:shadow-xl ${selectedItem === item ? 'bg-green-400 text-white' : 'bg-zinc-300 hover:bg-zinc-100'}`}
+                  onClick={() => {
+                    if (selectedItems.includes(item)) {
+                      setSelectedItems(selectedItems.filter(i => i !== item));
+                    } else {
+                      setSelectedItems([...selectedItems, item]);
+                    }
+                  }}
+                  className={`cursor-pointer p-9 m-2 rounded-lg shadow-lg animate-pop-in-late table-container flex justify-center transform transition-all duration-200 hover:shadow-xl ${selectedItems.includes(item) ? 'bg-green-400 text-white' : 'bg-zinc-300 hover:bg-zinc-100'}`}
                 >
                   <span className="font-mono text-xs">
                     {item}
@@ -134,10 +157,12 @@ export default function Home() {
             <button
               className="p-3 my-2 text-sm text-zinc-800 bg-zinc-100 font-mono animate-pop-in-late rounded-lg focus:outline-none shadow-lg hover:bg-green-400 hover:text-white"
               onClick={handleGenerateClick}
+              disabled={isLoading}
             >
-              ⚙️ Generate
+              {isLoading ? 'Loading...' : '⚙️ Generate'}
             </button>
           </div>
+          {errorMsg && <p className="error-message font-mono text-xs text-center">{errorMsg}</p>}
         </div>
 
         <div className="w-1/3 h-96 bg-zinc-200 m-6 rounded shadow-lg p-4 table-container animate-pop-in  border-2 border-dashed border-blue-300">
