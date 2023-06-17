@@ -51,9 +51,9 @@ export default function Home() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        codeContent: fileContent,
-        promptContent: textareaContent,
-        selectedLibrary: selectedItem,
+        source_code: fileContent,
+        prompt: textareaContent,
+        libraries: [selectedItem],
       }),
     });
 
