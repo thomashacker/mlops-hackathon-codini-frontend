@@ -14,6 +14,7 @@ export default function Home() {
   const listItems = ["Weaviate", "LangChain"];
   const [textareaContent, setTextareaContent] = useState('');
   const [apiStatus, setApiStatus] = useState<string>("Offline");
+  const [generatedCode, setGeneratedCode] = useState<string>('');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -58,6 +59,8 @@ export default function Home() {
     });
 
     const responseData = await response.json();
+
+    setGeneratedCode(responseData);
 
     // do something with responseData
   };
@@ -147,6 +150,7 @@ export default function Home() {
           <Editor
             height="calc(100% - 2rem)"
             defaultLanguage="python"
+            value={generatedCode}
           />
         </div>
       </div>

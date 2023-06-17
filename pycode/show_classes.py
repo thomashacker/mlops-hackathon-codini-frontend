@@ -12,7 +12,7 @@ def main() -> None:
 
     client = weaviate.Client(url=url)
 
-    print(client.schema.get())
+    print(client.query.get("LangChain_test", ["text"]).do())
 
     msg.good("Client connected to Weaviate Instance")
 
