@@ -57,24 +57,24 @@ export default function Home() {
   const handleGenerateClick = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:8000/generate/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // open a websocket connection
+      const socket = new WebSocket('ws://127.0.0.1:8000/generate/');
+  
+      // listen for messages
+      socket.onmessage = (event) => {
+        // update the generated code
+        setGeneratedCode(prev => `${prev}\n${event.data}`);
+      };
+  
+      // send the data when the socket is open
+      socket.onopen = () => {
+        socket.send(JSON.stringify({
           source_code: fileContent,
           prompt: textareaContent,
           libraries: selectedItems.map(item => libraryLinks[item]),
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Something went wrong');
-      }
-
-      const responseData = await response.json();
-      setGeneratedCode(responseData);
+        }));
+      };
+  
     } catch (error) {
       setErrorMsg(error.message);
     } finally {
