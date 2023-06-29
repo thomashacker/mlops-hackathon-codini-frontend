@@ -1,4 +1,5 @@
 "use client";
+import ReactConsole from 'react-console-emulator'
 
 import Image from 'next/image';
 import Editor from "@monaco-editor/react";
@@ -10,10 +11,13 @@ import { TbPrompt } from "react-icons/tb";
 export default function Home() {
   const [text, setText] = useState("");
   const [fileContent, setFileContent] = useState('');
+  const [codeerrorMsg, setCoderrorMsg] = useState("");
+  const [planContent, setPlanContent] = useState<string>('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [textareaContent, setTextareaContent] = useState('');
   const [apiStatus, setApiStatus] = useState<string>("Offline");
   const [generatedCode, setGeneratedCode] = useState<string>('');
+  const [websocket, setWebsocket] = useState<WebSocket | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -54,32 +58,43 @@ export default function Home() {
     checkApiHealth();
   }, []);
 
-  const handleGenerateClick = async () => {
+  const handleGenerateClick = () => {
     setIsLoading(true);
-    try {
-      // open a websocket connection
-      const socket = new WebSocket('ws://127.0.0.1:8000/generate/');
-  
-      // listen for messages
-      socket.onmessage = (event) => {
-        // update the generated code
-        setGeneratedCode(prev => `${prev}\n${event.data}`);
-      };
-  
-      // send the data when the socket is open
-      socket.onopen = () => {
-        socket.send(JSON.stringify({
-          source_code: fileContent,
-          prompt: textareaContent,
-          libraries: selectedItems.map(item => libraryLinks[item]),
-        }));
-      };
-  
-    } catch (error) {
-      setErrorMsg(error.message);
-    } finally {
+    const ws = new WebSocket('ws://localhost:8000/generate/');
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        source_code: fileContent,
+        prompt: textareaContent,
+        libraries: selectedItems.map(item => libraryLinks[item]),
+      }));
+    };
+    ws.onmessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data);
+      console.log(data);  // log the data immediately when received
+      if (data.plan) {
+        setPlanContent(data.plan);
+      }
+      if (data.code) {
+        setGeneratedCode(data.code);
+      }
+      if (data.error){
+        setCoderrorMsg(data.error);
+      }
+      if (data.is_final) {
+        setIsLoading(false);
+        ws.close();
+      }
+    };
+    ws.onerror = (error: Event) => {
+      console.log(`WebSocket error: ${error}`);
       setIsLoading(false);
-    }
+    };
+    ws.onclose = (event: CloseEvent) => {
+      if (!event.wasClean || event.code !== 1000) {
+        console.log(`WebSocket connection closed unexpectedly: [${event.code}] ${event.reason}`);
+      }
+      setIsLoading(false);
+    };
   };
 
   return (
@@ -106,16 +121,15 @@ export default function Home() {
             <span className="bg-red-500 rounded-full w-2 h-2 mr-1"></span>
             <span className="bg-yellow-500 rounded-full w-2 h-2 mr-1"></span>
             <span className="bg-green-500 rounded-full w-2 h-2 mr-2"></span>
-            <span className="font-mono font-bold text-sm text-zinc-800">my_code.hax</span>
+            <span className="font-mono font-bold text-sm text-zinc-800">Code Plan</span>
           </div>
           <Editor
             height="calc(100% - 2rem)"
-            defaultLanguage="python"
-            value={fileContent}
+            defaultLanguage="markdown"
+            value={planContent}
+            wordWrap="on"  // enables word wrapping in Monaco Editor
           />
-          <div className='mt-6'>
-            <input type="file" accept=".py" onChange={handleFileChange} />
-          </div>
+
         </div>
 
         <div className=" w-1/4 bg-zinc-100 m-6  p-3 rounded-lg shadow-lg animate-pop-in table-container">
@@ -170,7 +184,7 @@ export default function Home() {
             <span className="bg-red-500 rounded-full w-2 h-2 mr-1"></span>
             <span className="bg-yellow-500 rounded-full w-2 h-2 mr-1"></span>
             <span className="bg-green-500 rounded-full w-2 h-2 mr-2"></span>
-            <span className="font-mono font-bold text-sm text-zinc-800">magic_code.wow</span>
+            <span className="font-mono font-bold text-sm text-zinc-800">magic_code.py</span>
           </div>
           <Editor
             height="calc(100% - 2rem)"
@@ -178,7 +192,43 @@ export default function Home() {
             value={generatedCode}
           />
         </div>
+
       </div>
+      {/* The error console 
+      <div
+        style={{
+          backgroundColor: 'black',
+          color: '#00FF00',
+          padding: '10px',
+          minHeight: '100px',
+          whiteSpace: 'pre-wrap', // This allows for multiline error messages
+          border: '2px solid red',
+          marginTop: '10px',
+          fontFamily: 'monospace', // Gives the console-like appearance
+          width: '80%', // Adjust the width as per requirement
+        }}
+        className="mx-auto text-left" // Center the div
+      >
+        {codeerrorMsg.split('\n').map((line, index) => (
+          <p key={index} style={{ paddingLeft: '10px' }}>
+            {line}
+          </p>
+        ))}
+      </div>*/}
+      <div className="flex justify-center mt-4">
+        <div
+          className="terminal-style"
+          style={{ width: '80%' }}
+        >
+          <p>You will find the logs here.</p>
+          {codeerrorMsg && (
+            <div>
+              <p>{codeerrorMsg}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
     </div>
 
   )
