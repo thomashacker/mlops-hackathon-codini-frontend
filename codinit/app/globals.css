@@ -171,3 +171,31 @@
   opacity: 0.5;
   z-index: 0;
 }
+
+.terminal-style {
+  display: flex;
+  flex-direction: column;
+  background-color: #F5F5F5;
+  border: 4px solid #00f; 
+  border-image: linear-gradient(45deg, rgba(255, 0, 0, 1) 0%, rgba(255, 154, 0, 1) 10%, rgba(208, 222, 33, 1) 20%, rgba(79, 220, 74, 1) 30%, rgba(63, 218, 216, 1) 40%, rgba(47, 201, 226, 1) 50%, rgba(28, 127, 238, 1) 60%, rgba(95, 21, 242, 1) 70%, rgba(186, 12, 248, 1) 80%, rgba(251, 7, 217, 1) 90%, rgba(255, 0, 0, 1) 100%);
+  border-image-slice: 1;
+  animation: gradient 5s ease infinite;
+  border-radius: 10px;
+  padding: 10px;
+  color: #333;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  minHeight: 100px;
+  white-space: pre-wrap;  
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease-in-out;
+}
+
+.terminal-style:hover {
+  transform: scale(1.02);
+}
+
+.markdown-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
